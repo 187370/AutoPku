@@ -1,304 +1,216 @@
 # AutoPku
 
-> 北大课程通知自动化管理系统 | PKU Course Notification Automation
+> 北京大学本科全自动解决方案 | 从通知获取到作业提交，全程 AI 托管
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Agent Team](https://img.shields.io/badge/Agent%20Team-Experimental-blue)](https://github.com/anthropics/claude-code)
+[![pku3b](https://img.shields.io/badge/pku3b-Compatible-green)](https://github.com/sshwy/pku3b)
 
-基于 **Claude Code** + **pku3b** 的自动化课程通知管理方案，一键获取、分类、汇总教学网通知。
+**只需学号密码 → AI 自动完成一切**
+
+![AutoPku 流程概览](./images/autopku-flow.png)
+
+---
+## 快速开始
+
+### 第一步：下载 Skill
+
+```bash
+git clone https://github.com/ICUlizhi/AutoPku.git
+```
+
+### 第二步：交给 Claude Code
+
+在 Claude Code 中加载 skill：
+
+```
+读取 AutoPku/skill.md，并执行
+```
+
+然后 Claude 会让你告诉它学号和密码：
+
+```
+学号是 2200011111，密码是 xxx
+```
+
+### 第三步：离开电脑，相信cc
+去享受北平难得的春天
+
+---
+## 项目背景
+
+当前 AI Agent 领域存在一个根本性矛盾：我们一方面期待 Agent 能够处理复杂的真实世界任务，另一方面现有的单 Agent 架构却在上下文管理、任务并行和长期规划上表现出明显的瓶颈。以 AutoGPT、OpenClaw 等为代表的早期探索虽然验证了概念可行性，但在面对多课程并行、长链路依赖的场景时，串行执行导致的效率低下和上下文遗忘问题变得难以忽视。
+
+Agent Team 架构提供了一种不同的思路。与其在单个 Agent 的上下文窗口内不断堆叠复杂度，不如将任务天然地拆分为多个独立执行的单元，每个单元由专门的 Agent 负责，通过结构化的消息传递进行协作。这种架构与分布式系统中的微服务理念类似：关注点分离、故障隔离、并行扩展。
+
+本项目基于 Claude Code 的实验性 Agent Team 功能实现。但我没有选择自建一套 Agent 系统，而是将全部领域逻辑（教学网登录 via pku3b、PDF 解析策略、LaTeX 渲染管线、教学网提交协议等）内嵌在一个 skill.md 文件中。原因是：
+- **由一体化 Agentic RL 训练出的 Claude Code，工具调用被蒸馏回了模型参数，且涌现出了人类炼丹师想不到的pattern, 其内置的能力远优于手工搭建的 Agent 框架**。
+- 与其维护一套需要单独配置 API key 的外部系统，不如直接利用每个人本地已配置好的 Claude Code 实例——它已经有了用户的 context，已经通过了身份验证，已经具备了代码执行环境。
+
+目前业界对多 Agent 协作的探索仍处于早期。仅有 Kimi 的 Agent Swarm 和 Claude Code 的实验性功能提供了基础能力。
+
+本项目的价值在于验证一个端到端的完整流程：从教学网认证到作业提交，全链路由 Agent Team 自主完成。
+
+---
+
+## 一个想法：从《2010》到摘星揽月
+
+> *"它们像细菌一样繁殖，以指数速度扩张，直到覆盖整个木星表面。"*
+> —— Arthur C. Clarke《2010: Odyssey Two》
+
+我理想中的 Agent 终极形态是这样的：给主 Agent 下达一个摘星揽月的宏观命令——"点燃木星"——它能够像《2010》中的黑色巨石那样，自我复制、有序分裂、集体协作、最终汇报。巨石们无需通过中央指挥来协调，而是通过极简的本地通信和相变识别（当密度达到临界点，木星变成恒星），完成了一个行星尺度的工程。
+
+**现状是骨感的。** Agent Team 目前甚至连明确定义都没有——业界常说的 Multi-Agent 到底是指多个独立实例的协作，还是一个主 Agent 的函数调用？实现层面也极其初级，Kimi 的 Agent Swarm 和 Claude 的实验性功能提供了基础能力，但参数层面根本没有针对"自我复制与协作"进行训练。我们甚至没有普适的评估基准（benchmark）来衡量一个 Agent 系统的"增殖效率"或"解决问题的能力"。
+
+但这正是探索的意义所在。如果一切都已成熟，那留给我们的就只有调参的工作了。
+
+就从让 agent 完成北大学业开始吧。
 
 ---
 
 ## 功能特性
 
-- 🤖 **全自动获取**：定时从教学网拉取所有课程通知
-- 📁 **智能分类**：自动按课程、类型（作业/通知/资料/考试）整理
-- 📊 **可视报告**：生成任务看板、DDL统计、考试时间表
-- 🔧 **易于扩展**：支持任意数量课程，配置简单
-- 📝 **Markdown输出**：原生支持 Obsidian/Notion 等笔记软件
+| 功能 | 说明 |
+|------|------|
+| 📥 **通知自动获取** | 连接教学网，下载所有课程通知和作业附件 |
+| 🤖 **Agent Team 处理** | 每门课程独立 Agent 并行处理 |
+| 📝 **作业自动完成** | PDF 解析 → AI 解答 → 生成答案 → 提交 |
+| 📄 **智能渲染** | Markdown 自动转换为 PDF（支持 LaTeX 公式） |
+| 🚀 **一键提交** | 自动提交到教学网，无需手动操作 |
 
 ---
 
-## 快速开始
 
-### 1. 安装依赖
 
-```bash
-# 安装 pku3b（命令行教学网客户端）
-# Windows:
-irm https://github.com/yang-er/pku3b/raw/main/install.ps1 | iex
+## Claude Code 会做什么
 
-# macOS/Linux:
-curl -fsSL https://github.com/yang-er/pku3b/raw/main/install.sh | sh
+### 模式一：获取所有通知（默认）
 
-# 配置登录
-pku3b auth login
-
-# 安装 Claude Code
-npm install -g @anthropic-ai/claude-code
-```
-
-### 2. 克隆本仓库
-
-```bash
-git clone https://github.com/ICUlizhi/AutoPku.git
-cd AutoPku
-```
-
-### 3. 配置课程
-
-编辑 `config/courses.yaml`，添加你的课程：
-
-```yaml
-courses:
-  - name: "量子力学"
-    folder: "./量子力学"
-    keywords: ["量子", "简明量子力学"]
-  
-  - name: "马原"  
-    folder: "./马原"
-    keywords: ["马原", "马克思主义基本原理"]
-```
-
-### 4. 运行自动化
-
-```bash
-claude
-# 然后在 Claude Code 中：读取 skill.md 并执行
-```
-
----
-
-## 项目结构
+当你只提供学号密码时，Claude 会：
 
 ```
-AutoPku/
-├── skill.md              # Agent 配置模板（核心）
-├── config/
-│   └── courses.yaml      # 课程配置
-├── reports/              # 生成的报告
-│   ├── dashboard.md      # 总览看板
-│   ├── task-stack.md     # 任务栈
-│   └── exam-timeline.md  # 考试时间表
-├── courses/              # 课程文件夹（自动生成）
-│   └── {课程名}/
-│       ├── 作业/
-│       ├── 通知/
-│       ├── 资料/
-│       └── 通知摘要.md
-├── 公众号文章.md         # 微信公众号教程
-└── README.md             # 本文件
+1. 安装并登录 pku3b
+   └─ 自动下载正确版本，使用 expect 脚本登录
+
+2. 获取课程数据
+   └─ 从教学网拉取所有课程、作业、通知
+
+3. 召唤 Agent Team
+   └─ 为每门课程创建独立 Agent（并行执行）
+   └─ 每个 Agent 下载附件、生成摘要
+
+4. 生成汇总报告
+   └─ 通知摘要汇总.md（紧急任务高亮）
 ```
 
----
-
-## 使用教程
-
-### 基础用法
-
-```bash
-# 进入项目目录
-cd AutoPku
-
-# 启动 Claude Code
-claude
-
-# 执行自动化（在 Claude Code 中输入）
-读取 skill.md 并执行课程通知获取任务
+**输出结果**：
+```
+test/
+├── 通知摘要汇总.md          # 总览：所有课程的紧急任务
+├── 简明量子力学/
+│   ├── 作业/                # 下载的作业 PDF
+│   ├── 通知/                # 课程通知
+│   ├── 资料/                # 课件资料
+│   └── 通知摘要.md          # 该课程的作业列表
+└── ...
 ```
 
-### 定时自动运行
+### 模式二：完成特定作业
 
-**macOS/Linux - crontab：**
+当你指定课程和作业时：
 
-```bash
-# 每天早8点自动同步
-0 8 * * * cd /path/to/AutoPku && claude run skill.md
-
-# 每周日晚上生成周报
-0 20 * * 0 cd /path/to/AutoPku && claude run reports/weekly.md
+```
+skill: autopku 简明量子力学 hw5
 ```
 
-**Windows - 任务计划程序：**
+Claude 会：
 
-1. 打开"任务计划程序"
-2. 创建基本任务 → 设置每天触发
-3. 操作：启动程序 `claude`，参数 `run skill.md`
+```
+1. 列出待交作业
+   └─ 让你选择具体完成哪一次作业
 
----
+2. 创建 Agent Team 执行 5 Phase 流程
 
-## 配置说明
+   Phase 1: PDF 解析
+      └─ parser agent: 代码间接提取 PDF 题目
+      └─ 输出: homework_parsed.json
 
-### 单 Agent 模式（推荐入门）
+   Phase 2: 题目解答
+      └─ solver agent: 逐题解答，参考资料
+      └─ 输出: answers.json
 
-适合课程数量较少（1-5门）的场景，一个 Agent 处理所有课程。
+   Phase 3: 文档生成
+      └─ writer agent: Markdown 格式化
+      └─ 输出: HomeworkXXXX_answer.md
 
-编辑 `config/courses.yaml`：
+   Phase 4: PDF 渲染
+      └─ renderer agent: Markdown → PDF
+      └─ 输出: HomeworkXXXX_answer.pdf
 
-```yaml
-# 基础配置
-team:
-  name: "autopku"
-  mode: "single"  # single 或 multi
-
-# 课程列表
-courses:
-  - name: "课程显示名称"
-    folder: "./课程文件夹名"  # 相对路径或绝对路径
-    keywords:                 # 用于匹配教学网课程名
-      - "关键词1"
-      - "关键词2"
-    color: "blue"             # 报告中的颜色标识
+   Phase 5: 教学网提交
+      └─ portal_submitter: 自动提交
+      └─ 状态: 已完成
 ```
 
-### 多 Agent Team 模式（高级）
-
-适合课程数量多（5+门）或需要并行处理的场景。
-
-```yaml
-team:
-  name: "course-notifiers"
-  mode: "multi"
-
-agents:
-  - name: "quantum-agent"
-    course: "简明量子力学"
-    folder: "./量子力学"
-    keywords: ["量子"]
-    color: "cyan"
-  
-  - name: "thesis-agent"
-    course: "毕业论文"
-    folder: "./毕设"
-    keywords: ["毕设", "毕业论文"]
-    color: "purple"
+**输出结果**：
 ```
-
-启动命令：
-
-```bash
-# 创建 Team
-claude team create course-notifiers
-
-# 并行启动所有 Agents
-for agent in config/agents/*.yaml; do
-  claude agent create --team course-notifiers --config $agent &
-done
+test/简明量子力学/
+├── 作业/
+│   ├── Homework202605.pdf           # 原始作业
+│   └── Homework202605_answer.md     # 答案 Markdown
+├── 提交/
+│   └── Homework202605_answer.pdf    # 最终 PDF（已提交）
+├── homework_parsed.json             # PDF 解析结果
+└── answers.json                     # 答案数据
 ```
 
 ---
 
-## 高级功能
+## Agent Team 结构
 
-### 自定义分类规则
-
-```yaml
-classification:
-  assignment:
-    patterns: ["作业", "Assignment", "Homework"]
-    folder: "作业"
-  
-  exam:
-    patterns: ["考试", "测验", "Quiz", "Exam"]
-    folder: "考试"
-    priority: "high"  # 高优先级提醒
+```
+Team: autopku-team
+│
+├── coordinator (协调者)
+│   └── 分配任务，汇总结果
+│
+├── pdf_parser (PDF解析器)
+│   └── 代码间接解析 PDF（禁止直接读取）
+│
+├── solver (解题者)
+│   └── 逐题解答，参考资料
+│
+├── writer (撰写者)
+│   └── 格式化 Markdown 答案
+│
+├── renderer (渲染器)
+│   └── Markdown → PDF（Chrome Headless）
+│
+└── portal_submitter (提交者)
+    └── 提交到教学网
 ```
 
-### Webhook 推送
-
-```yaml
-notifications:
-  webhook:
-    url: "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=..."
-    events: ["新作业发布", "DDL提醒"]
-  
-  email:
-    smtp: "smtp.pku.edu.cn"
-    to: "your_email@pku.edu.cn"
-```
-
-### 与 Obsidian 集成
-
-```bash
-# 软链接报告到 Obsidian 仓库
-ln -s $(pwd)/reports/dashboard.md ~/Obsidian/PKU/课程看板.md
-
-# 或使用 Git 同步
-```
+![Agent Team 结构](./images/agent-team.png)
 
 ---
 
-## 故障排除
+## 用户确认机制
 
-### pku3b 相关问题
+**作业完成前必须确认**：
 
-```bash
-# 检查登录状态
-pku3b auth status
+1. Claude 列出该课程所有待交作业
+2. 你选择具体完成哪一次
+3. 二次确认后开始执行
+4. 可随时取消
 
-# 重新登录
-pku3b auth logout
-pku3b auth login
+> 禁止自动选择最新作业，必须用户明确确认。
 
-# 测试连接
-pku3b assignment list
-```
-
-### Claude Code 权限问题
-
-**macOS：**
-
-1. 打开 "系统设置" → "隐私与安全性"
-2. 找到"完全磁盘访问权限"
-3. 添加 Terminal/iTerm2/Claude Code
-
-**Windows：**
-
-以管理员身份运行 PowerShell/CMD
-
-### 课程匹配失败
-
-1. 查看教学网原始课程名：
-   ```bash
-   pku3b assignment list
-   ```
-
-2. 在 `keywords` 中添加更多匹配词：
-   ```yaml
-   keywords: ["马原", "马克思主义", "马克思主义基本原理概论"]
-   ```
-
----
-
-## 相关项目
-
-- [pku3b](https://github.com/yang-er/pku3b) - 命令行教学网客户端
-- [Claude Code](https://github.com/anthropics/claude-code) - AI 编程助手
-
----
-
-## 贡献指南
-
-欢迎 Issue 和 PR！
-
-1. Fork 本仓库
-2. 创建 feature 分支 (`git checkout -b feature/xxx`)
-3. 提交更改 (`git commit -am 'Add xxx'`)
-4. 推送到分支 (`git push origin feature/xxx`)
-5. 创建 Pull Request
 
 ---
 
 ## 许可证
 
 MIT License - 自由使用和修改
-
----
-
-## 致谢
-
-- [@yang-er](https://github.com/yang-er) - pku3b 开发者
-- [Anthropic](https://www.anthropic.com/) - Claude Code
-- 所有贡献者和使用者
 
 ---
 
