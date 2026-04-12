@@ -7,9 +7,11 @@
 !/README.md
 !/skill.md
 !/sub-skills/
+!/sub-skills/**/
+!/sub-skills/**/*
 !/codex/
-!/codex/autopku/
-!/codex/autopku/**
+!/codex/**/
+!/codex/**/*
 !/images
 # 汇总报告（自动生成）
 通知摘要汇总.md
