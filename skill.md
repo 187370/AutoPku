@@ -9,7 +9,9 @@ description: AutoPku - 自动获取PKU课程通知、完成作业、撰写笔记
 
 ## 配置说明
 
-**配置文件位置**: `~/.claude/settings.local.json`
+### 全局配置（推荐）
+
+**文件位置**: `~/.claude/settings.json`
 
 ```json
 {
@@ -25,9 +27,21 @@ description: AutoPku - 自动获取PKU课程通知、完成作业、撰写笔记
 }
 ```
 
-**配置项说明**:
-- `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`: 启用 Agent Team 并行处理
-- `USER_TYPE`: 标识用户类型（ant 为开发测试账号）
+### 本地配置（项目特定）
+
+**文件位置**: `.claude/settings.local.json`（项目根目录）
+
+内容同上，本地配置会覆盖全局配置。
+
+### 配置项说明
+
+| 配置项 | 说明 |
+|--------|------|
+| `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` | 启用 Agent Team 并行处理功能 |
+| `USER_TYPE` | 用户类型标识（ant 为开发测试账号） |
+| `permissions.allow` | 允许使用的工具 |
+| `permissions.deny` | 禁止使用的工具（安全保护） |
+| `defaultMode` | 默认权限模式 |
 
 ## 使用方式
 
