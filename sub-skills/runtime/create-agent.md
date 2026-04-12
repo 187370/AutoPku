@@ -56,6 +56,17 @@ for task in task_list:
     })
 ```
 
+### Kimi Code CLI 环境
+
+```python
+for task in task_list:
+    Agent({
+        "description": f"处理 {task['course']}",
+        "prompt": agent_template.format(**task),
+        "subagent_type": "coder"
+    })
+```
+
 ### Codex 环境
 
 ```
@@ -109,3 +120,4 @@ agents = create_agents(
 1. 不要直接调用此接口，而是通过引用方式使用
 2. 实际的 agent 创建语法由运行时环境决定
 3. 在 Codex 环境中，使用自然语言描述并行任务
+4. 在 Kimi 环境中，Agent 结果直接返回，无需额外消息通信机制

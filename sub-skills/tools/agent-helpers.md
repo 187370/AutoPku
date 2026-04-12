@@ -156,6 +156,16 @@ for course in courses:
     Agent(name=f"{course}-agent", prompt=...)
 ```
 
+### Kimi Code CLI
+```python
+for course in courses:
+    Agent({
+        "description": f"处理 {course}",
+        "prompt": ...,
+        "subagent_type": "coder"
+    })
+```
+
 ### Codex
 ```
 请为以下课程并行创建 subagents：

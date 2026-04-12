@@ -27,6 +27,8 @@ description: AutoPku - 自动获取PKU课程通知、完成作业、撰写笔记
 }
 ```
 
+**Kimi Code CLI 用户**: 建议设置环境变量 `KIMI_CODE_CLI=1` 以启用 Kimi Agent Team 支持（或通过 `which kimi` 自动检测）。
+
 ### 本地配置（项目特定）
 
 **文件位置**: `.claude/settings.local.json`（项目根目录）
@@ -61,11 +63,14 @@ description: AutoPku - 自动获取PKU课程通知、完成作业、撰写笔记
 
 ```python
 import os
+import shutil
 
 if os.environ.get("CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS"):
     RUNTIME = "claude"      # 使用 Agent() tool + SendMessage()
 elif os.environ.get("CODEX") == "1":
     RUNTIME = "codex"       # 使用 native subagents
+elif os.environ.get("KIMI_CODE_CLI") == "1" or os.environ.get("KIMI") == "1" or shutil.which("kimi"):
+    RUNTIME = "kimi"        # 使用 Kimi Agent() + TaskList/TaskOutput
 else:
     RUNTIME = "serial"      # 串行执行
 ```
@@ -105,6 +110,14 @@ for config in agent_configs:
         "name": config["name"],
         "prompt": config["task"],
         "description": config.get("description", "")
+    })
+
+# Kimi Code CLI 环境
+for config in agent_configs:
+    Agent({
+        "description": config.get("description", ""),
+        "prompt": config["task"],
+        "subagent_type": config.get("subagent_type", "coder")
     })
 
 # Codex 环境
@@ -191,6 +204,16 @@ chmod +x /tmp/pku3b_login.exp
 | 数据解析 | `tools/data-parser.md` | ANSI颜色码处理、正则提取 |
 | PDF读取 | `tools/pdf-reader.md` | PyMuPDF/pdfplumber 代码示例 |
 | Agent模板 | `tools/agent-helpers.md` | Coordinator/Parser/Solver/Writer/Submitter Prompts |
+
+## Runtime Skills 索引
+
+| Runtime | 文件 | 说明 |
+|---------|------|------|
+| 环境检测 | `runtime/_detect.md` | 自动检测 Claude/Codex/Kimi/Fallback |
+| Agent 创建 | `runtime/create-agent.md` | 统一的跨平台 Agent 创建接口 |
+| Claude Team | `runtime/claude-team.md` | Claude Code Agent Team 语法 |
+| Codex Subagent | `runtime/codex-subagent.md` | Codex native subagent 语法 |
+| Kimi Team | `runtime/kimi-team.md` | Kimi Code CLI Agent Team 语法 |
 
 ## 关键踩坑记录
 
