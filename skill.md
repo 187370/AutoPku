@@ -194,7 +194,7 @@ chmod +x /tmp/pku3b_login.exp
 |------|------|------|
 | 同步通知 | `tasks/sync-notices.md` | 获取作业/公告，生成摘要，并行处理课程 |
 | 完成作业 | `tasks/do-homework.md` | 解析PDF→解答→渲染→询问用户→提交 |
-| 撰写笔记 | `tasks/write-notes.md` | 从课件提取数学核心，去除噪声 |
+| 撰写笔记 | `tasks/write-notes.md` | 标准 notes pipeline：每 PDF 一个 Writer Agent，生成 `notes/*.md`、`notes/README.md`，可选合成 PDF |
 
 ## Tool Skills 索引
 
@@ -278,6 +278,29 @@ test/
 └── 提交/                           # 最终提交文件
     └── Homework202605_answer.pdf
 ```
+
+### 撰写笔记输出
+
+AutoPku 的标准笔记 pipeline 由 `sub-skills/tasks/write-notes.md` 定义：
+
+```
+{course}/
+├── lectures/                         # 原始 PDF 课件，或用户指定的 PDF 目录
+├── notes/
+│   ├── {lecture_name}.md             # 每个 PDF 对应一篇 Writer Agent 笔记
+│   └── README.md                     # Coordinator 生成的课程索引
+└── pdf/                              # 可选：用户要求合成 PDF 时创建
+    ├── {course_name}课程笔记.typ
+    ├── {course_name}课程笔记.pdf
+    └── notes-template.typ
+```
+
+执行约定：
+- 每个 PDF 创建一个独立 Writer Agent 并行处理。
+- Writer Agent 按 `sub-skills/tools/pdf-reader.md` 的 PyMuPDF/pdfplumber 方案读取课件。
+- Writer Agent 只写自己的 `notes/{lecture_name}.md`，不得修改索引。
+- Coordinator 等全部 Writer Agent 完成后生成 `notes/README.md`。
+- 需要合成文档时，再由 Coordinator 使用 Pandoc + Typst/LaTeX 风格模板输出 PDF，并验证页数和首页文本。
 
 ## 安全规则
 
